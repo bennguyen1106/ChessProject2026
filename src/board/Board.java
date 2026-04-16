@@ -30,6 +30,7 @@ public class Board {
         grid[0][5] = new Bishop("Black", 0, 5);
         grid[0][6] = new Knight("Black", 0, 6);
         grid[0][7] = new Rook("Black", 0, 7);
+
         // Black Pawns (Row 1)
         for (int i = 0; i < 8; i++) {
             grid[1][i] = new Pawn("Black", 1, i);
@@ -39,6 +40,7 @@ public class Board {
         for (int i = 0; i < 8; i++) {
             grid[6][i] = new Pawn("White", 6, i);
         }
+
         // White Back Row (Row 7)
         grid[7][0] = new Rook("White", 7, 0);
         grid[7][1] = new Knight("White", 7, 1);
@@ -52,13 +54,15 @@ public class Board {
 
     /**
      * Displays the current state of the board in the console.
-     * Uses standard algebraic notation for columns (A-H) and ranks (1-8).
+     */
+/**
+     * Displays the current state of the board in the console.
      */
     public void display() {
         System.out.println("\n    A  B  C  D  E  F  G  H");
         System.out.println("  +-------------------------+");
         for (int r = 0; r < 8; r++) {
-            System.out.print((8 - r) + " | "); // Rank labels
+            System.out.print((8 - r) + " | "); 
             for (int c = 0; c < 8; c++) {
                 if (grid[r][c] == null) {
                     System.out.print("-- ");
@@ -69,4 +73,10 @@ public class Board {
             System.out.println("| " + (8 - r));
         }
         System.out.println("  +-------------------------+");
-        System.out.println("    A  B
+        System.out.println("    A  B  C  D  E  F  G  H");
+    }
+
+    public Piece[][] getGrid() {
+        return grid;
+    }
+}
