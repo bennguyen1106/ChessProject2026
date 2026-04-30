@@ -7,10 +7,23 @@ public class Pawn extends Piece {
 
     @Override
     public boolean isValidMove(int destRow, int destCol, Piece[][] grid) {
-        // Basic logic: Pawns move forward 1. 
-        // Note: Full legality (captures, double-step) goes here in later phases.
         int direction = color.equals("White") ? -1 : 1;
-        return (destRow == row + direction && destCol == col);
+        int startRow = color.equals("White") ? 6 : 1;
+
+        // One step forward to empty square
+        if (destCol == col && destRow == row + direction && grid[destRow][destCol] == null)
+            return true;
+
+        // Two steps forward from starting row (path must be clear)
+        if (destCol == col && row == startRow && destRow == row + 2 * direction
+                && grid[row + direction][col] == null && grid[destRow][destCol] == null)
+            return true;
+
+        // Diagonal capture (Board already blocks same-color, so any piece here is enemy)
+        if (Math.abs(destCol - col) == 1 && destRow == row + direction && grid[destRow][destCol] != null)
+            return true;
+
+        return false;
     }
 
     @Override

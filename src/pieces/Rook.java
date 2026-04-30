@@ -7,8 +7,20 @@ public class Rook extends Piece {
 
     @Override
     public boolean isValidMove(int destRow, int destCol, Piece[][] grid) {
-        // Horizontal or Vertical: one coordinate remains the same
-        return (destRow == row || destCol == col);
+        // Must move in a straight line (not same square)
+        if (destRow != row && destCol != col) return false;
+        if (destRow == row && destCol == col) return false;
+
+        // Check that no pieces are blocking the path
+        int rowDir = Integer.signum(destRow - row);
+        int colDir = Integer.signum(destCol - col);
+        int r = row + rowDir, c = col + colDir;
+        while (r != destRow || c != destCol) {
+            if (grid[r][c] != null) return false;
+            r += rowDir;
+            c += colDir;
+        }
+        return true;
     }
 
     @Override
