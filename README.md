@@ -5,27 +5,24 @@ A two-player chess game built in Java, developed across three phases: console ba
 
 ---
 
-## Preview
-
-![Chess GUI](resources/preview.png)
-
-> The board uses alternating light/dark squares. Pieces are displayed as PNG icons. White always moves first.
-
----
-
 ## How to Run
 
 **Requirements:** JDK 17+
 
-### GUI (Phase 2 & 3)
+> On Windows, run these commands in **Git Bash** or any bash terminal (not CMD or PowerShell) so the `*.java` wildcards expand correctly.
+
+### Quick Run (compiled classes already included)
 ```bash
-# From the project root
-javac -d bin -sourcepath src src/pieces/*.java src/board/Board.java src/gui/*.java
 java -cp bin gui.ChessGUI
 ```
 
-### Console / CLI (Phase 1)
+### Recompile from source
 ```bash
+# GUI (Phase 2 & 3)
+javac -d bin -sourcepath src src/pieces/*.java src/board/Board.java src/gui/*.java
+java -cp bin gui.ChessGUI
+
+# Console / CLI (Phase 1)
 javac -d bin -sourcepath src src/pieces/*.java src/board/Board.java src/main/ChessGame.java
 java -cp bin main.ChessGame
 ```
