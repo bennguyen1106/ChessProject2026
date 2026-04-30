@@ -16,6 +16,9 @@ public abstract class Piece {
 
     public String getColor() { return color; }
 
+    /** Updates the piece's position after a move. */
+    public void setPosition(int row, int col) { this.row = row; this.col = col; }
+
     /**
      * Subclasses implement unique movement rules here.
      * Returns true if the move to (destRow, destCol) is valid for that piece type.
