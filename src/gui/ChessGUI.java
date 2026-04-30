@@ -56,36 +56,42 @@ public class ChessGUI extends JFrame {
         add(boardPanel, BorderLayout.CENTER);
     }
 
-    private void handleAction(int r, int c) {
+private void handleAction(int r, int c) {
+    JButton clicked = squares[r][c];
+
     if (selectedSquare == null) {
-        // Selection Logic
+        // STEP 1: Select a piece from the BACKEND grid
+        // We check the backend board to see if a piece exists at these coordinates
         if (gameBoard.getGrid()[r][c] != null) {
-            selectedSquare = squares[r][c];
-            startR = r; startC = c;
-            selectedSquare.setBackground(Color.YELLOW);
+            selectedSquare = clicked;
+            startR = r; 
+            startC = c;
+            selectedSquare.setBackground(Color.YELLOW); // Visual feedback
         }
     } else {
-        // INTEGRATION POINT: Call your Phase 1 validation method
-        // Example: boolean legal = gameBoard.isValidMove(startR, startC, r, c);
-        boolean legal = true; // Replace with your actual move validation call
-
-        if (legal) {
-            // Update Backend State
-            gameBoard.executeMove(startR, startC, r, c); // Your Phase 1 move method
+        // STEP 2: Rule Enforcement (Requirement 11)
+        // Call your Phase 1 validation logic before allowing the GUI to update
+        if (gameBoard.isValidMove(startR, startC, r, c)) {
             
-            // Requirement 11: Check for special states
+            // Execute the move in the backend state
+            gameBoard.makeMove(startR, startC, r, c);
+            
+            // STEP 3: GUI Update (Requirement 12)
+            // Refresh the entire board to reflect the new backend state
+            refreshBoard();
+
+            // Handle Endgame scenarios like Check or Checkmate
             if (gameBoard.isCheckmate()) {
                 JOptionPane.showMessageDialog(this, "Checkmate! Game Over.");
             } else if (gameBoard.isCheck()) {
                 JOptionPane.showMessageDialog(this, "Check!");
             }
-
-            // Requirement 12: Sync GUI with Backend
-            refreshBoard();
         } else {
-            JOptionPane.showMessageDialog(this, "Illegal Move!");
+            // If the backend returns false, block the move and alert the user
+            JOptionPane.showMessageDialog(this, "Illegal Move! Follow chess rules.");
         }
         
+        // Always reset selection state
         resetAllSquareColors();
         selectedSquare = null;
     }
