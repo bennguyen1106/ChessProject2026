@@ -2,24 +2,28 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import board.Board;
+import pieces.Piece;
 
 /**
- * Final Phase 2 GUI. 
- * Includes: Piece Movement, Capture Logic, King Capture Detection, 
- * New Game Reset, and Settings Integration.
+ * Phase 3 Integrated Chess GUI.
+ * Connects the visual interface to the backend game logic.
  */
 public class ChessGUI extends JFrame {
     private JButton[][] squares = new JButton[8][8];
+    private Board gameBoard; // The Backend logic from Phase 1
     private JButton selectedSquare = null;
-    private Icon heldIcon = null;
-    private String heldPieceName = ""; // Track the name of the piece being moved
-    
+    private int startR, startC; // Track backend coordinates
+
+    // Theme Colors
     private Color currentLight = new Color(235, 235, 208);
     private Color currentDark = new Color(119, 148, 85);
 
     public ChessGUI() {
-        setTitle("Chess Project 2026 - Phase 2");
+        // Initialize the backend logic 
+        gameBoard = new Board();
+        
+        setTitle("Chess Project 2026 - Phase 3 (Integrated)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 800);
         setLayout(new BorderLayout());
@@ -31,31 +35,6 @@ public class ChessGUI extends JFrame {
         setVisible(true);
     }
 
-    private void setupMenu() {
-        JMenuBar mb = new JMenuBar();
-        JMenu gameMenu = new JMenu("Game");
-        
-        JMenuItem newItem = new JMenuItem("New Game");
-        newItem.addActionListener(e -> resetBoard());
-        
-        JMenuItem settingsItem = new JMenuItem("Settings");
-        settingsItem.addActionListener(e -> {
-            SettingsDialog dialog = new SettingsDialog(this);
-            dialog.setVisible(true);
-            if (dialog.wasApplied()) {
-                this.currentLight = dialog.getLight();
-                this.currentDark = dialog.getDark();
-                refreshColors();
-            }
-        });
-
-        gameMenu.add(newItem);
-        gameMenu.addSeparator();
-        gameMenu.add(settingsItem);
-        mb.add(gameMenu);
-        setJMenuBar(mb);
-    }
-
     private void setupBoard() {
         JPanel boardPanel = new JPanel(new GridLayout(8, 8));
         for (int r = 0; r < 8; r++) {
@@ -63,10 +42,10 @@ public class ChessGUI extends JFrame {
                 squares[r][c] = new JButton();
                 paintSquare(r, c);
 
-                String pieceName = getInitialPiece(r, c);
-                if (pieceName != null) {
-                    squares[r][c].setIcon(loadIcon(pieceName));
-                    squares[r][c].setName(pieceName); // Store piece name in the button name
+                // Get piece from the BACKEND grid [cite: 12]
+                Piece p = gameBoard.getGrid()[r][c];
+                if (p != null) {
+                    squares[r][c].setIcon(loadIcon(p.getColor() + p.getClass().getSimpleName()));
                 }
 
                 int row = r; int col = c;
@@ -78,86 +57,78 @@ public class ChessGUI extends JFrame {
     }
 
     private void handleAction(int r, int c) {
-        JButton clicked = squares[r][c];
+    if (selectedSquare == null) {
+        // Selection Logic
+        if (gameBoard.getGrid()[r][c] != null) {
+            selectedSquare = squares[r][c];
+            startR = r; startC = c;
+            selectedSquare.setBackground(Color.YELLOW);
+        }
+    } else {
+        // INTEGRATION POINT: Call your Phase 1 validation method
+        // Example: boolean legal = gameBoard.isValidMove(startR, startC, r, c);
+        boolean legal = true; // Replace with your actual move validation call
 
-        if (selectedSquare == null) {
-            // First Click: Selection
-            if (clicked.getIcon() != null) {
-                selectedSquare = clicked;
-                heldIcon = clicked.getIcon();
-                heldPieceName = clicked.getName(); // Remember what we picked up
-                clicked.setBackground(Color.YELLOW);
+        if (legal) {
+            // Update Backend State
+            gameBoard.executeMove(startR, startC, r, c); // Your Phase 1 move method
+            
+            // Requirement 11: Check for special states
+            if (gameBoard.isCheckmate()) {
+                JOptionPane.showMessageDialog(this, "Checkmate! Game Over.");
+            } else if (gameBoard.isCheck()) {
+                JOptionPane.showMessageDialog(this, "Check!");
             }
+
+            // Requirement 12: Sync GUI with Backend
+            refreshBoard();
         } else {
-            // Second Click: Move or Capture
-            if (clicked.getIcon() != null) {
-                // Requirement 5: Check for King Capture using the stored Name
-                String targetName = clicked.getName();
-                if (targetName != null && targetName.toLowerCase().contains("king")) {
-                    JOptionPane.showMessageDialog(this, "GAME OVER! The King has been captured.");
-                    System.exit(0);
+            JOptionPane.showMessageDialog(this, "Illegal Move!");
+        }
+        
+        resetAllSquareColors();
+        selectedSquare = null;
+    }
+}
+
+    private void refreshBoard() {
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece p = gameBoard.getGrid()[r][c];
+                if (p != null) {
+                    squares[r][c].setIcon(loadIcon(p.getColor() + p.getClass().getSimpleName()));
+                } else {
+                    squares[r][c].setIcon(null);
                 }
             }
-
-            // Move the piece
-            clicked.setIcon(heldIcon);
-            clicked.setName(heldPieceName); // Transfer the name to the new square
-            
-            selectedSquare.setIcon(null);
-            selectedSquare.setName(null); // Clear the old square
-            
-            // Reset state
-            refreshColors();
-            selectedSquare = null;
-            heldIcon = null;
-            heldPieceName = "";
         }
     }
 
-    private void resetBoard() {
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                squares[r][c].setIcon(null);
-                squares[r][c].setName(null);
-                String piece = getInitialPiece(r, c);
-                if (piece != null) {
-                    squares[r][c].setIcon(loadIcon(piece));
-                    squares[r][c].setName(piece);
-                }
+    private void setupMenu() {
+        JMenuBar mb = new JMenuBar();
+        JMenu gameMenu = new JMenu("Game");
+        JMenuItem settingsItem = new JMenuItem("Settings");
+        settingsItem.addActionListener(e -> {
+            SettingsDialog dialog = new SettingsDialog(this);
+            dialog.setVisible(true);
+            if (dialog.wasApplied()) {
+                this.currentLight = dialog.getLight();
+                this.currentDark = dialog.getDark();
+                resetAllSquareColors();
             }
-        }
-        refreshColors();
+        });
+        gameMenu.add(settingsItem);
+        mb.add(gameMenu);
+        setJMenuBar(mb);
     }
 
     private ImageIcon loadIcon(String name) {
-        String[] possiblePaths = {"resources/" + name + ".png", "src/resources/" + name + ".png", name + ".png"};
-        for (String p : possiblePaths) {
-            File f = new File(p);
-            if (f.exists()) {
-                ImageIcon icon = new ImageIcon(p);
-                Image img = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-                return new ImageIcon(img);
-            }
-        }
-        return null;
-    }
-
-    private String getInitialPiece(int r, int c) {
-        if (r == 1) return "BlackPawn";
-        if (r == 6) return "WhitePawn";
-        if (r == 0) {
-            if (c == 0 || c == 7) return "BlackRook";
-            if (c == 1 || c == 6) return "BlackKnight";
-            if (c == 2 || c == 5) return "BlackBishop";
-            if (c == 3) return "BlackQueen";
-            if (c == 4) return "BlackKing";
-        }
-        if (r == 7) {
-            if (c == 0 || c == 7) return "WhiteRook";
-            if (c == 1 || c == 6) return "WhiteKnight";
-            if (c == 2 || c == 5) return "WhiteBishop";
-            if (c == 3) return "WhiteQueen";
-            if (c == 4) return "WhiteKing";
+        String path = "resources/" + name + ".png";
+        java.io.File file = new java.io.File(path);
+        if (file.exists()) {
+            ImageIcon icon = new ImageIcon(path);
+            Image img = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
         }
         return null;
     }
@@ -167,7 +138,7 @@ public class ChessGUI extends JFrame {
         else squares[r][c].setBackground(currentDark);
     }
 
-    private void refreshColors() {
+    private void resetAllSquareColors() {
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) paintSquare(r, c);
         }
